@@ -1,0 +1,7 @@
+# Here is comment.
+
+# ignore target folder
+*/.DS_Store
+
+# ignore Eclipse files
+.DS_Store

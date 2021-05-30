@@ -6,3 +6,4 @@
 
 3D Object Detection on SUN-RGBD：https://paperswithcode.com/sota/3d-object-detection-on-sun-rgbd
 
+Geo only - 只使用几何输入（点云）

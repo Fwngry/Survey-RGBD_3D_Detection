@@ -24,13 +24,10 @@ open source：https://github.com/zaiweizhang/H3DNet
 
 H3DNet由三个模块组成：
 
-1. GEO primitive module：第一个模块计算密集描述符并预测三个几何基元，即BB中心、BB面中心和BB边缘中心。
-2. 提议生成 module：第二个模块将几何基元转换为物体建议。
-3. 分类&调整 module：第三个模块对对物体建议进行分类，并对检测到的对象进行重新定义。
+1. GEO primitive module：第一个模块计算密集描述符并预测三个几何基元，即BB中心、BB面中心和BB边缘中心。pred：BB center、BB face center、BB edge center
+2. 提议生成 module：第二个模块将几何基元转换为物体建议。geo primitive ➡️ 距离函数 dist(obj, geo primitive) ➡️ proposal
+3. 分类&调整 module：第三个模块对对物体建议进行分类，并对检测到的对象进行重新定义。proposal - 分类+调整
 
-1. pred：BB center、BB face center、BB edge center
-2. geo primitive ➡️ 距离函数 dist(obj, geo primitive) ➡️ proposal
-3. proposal - 分类+调整
 
 ## 引言
 

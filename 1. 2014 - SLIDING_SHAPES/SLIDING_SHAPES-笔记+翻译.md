@@ -88,6 +88,8 @@ Exemplar模型的总数在很大程度上超过了RMRC数据集中阳性物体�
 
 **三维局部搜索（3D Local Search）：**给定一个在相对于虚拟摄像机的特定三维位置渲染的CG模型上训练的示例-SVM，<u>我们只在附近进行三维卷积</u>。**（解释）**这种对搜索空间的限制提高了速度和检测的准确性，因为「远离训练地点的物体具有不同的点密度，并且由于其视角的不同而呈现出不同的自我封闭条件」。<u>SVM和三维特征可能不够强大，无法对这种差异进行建模</u>。因此，我们采取了一个更保守的搜索，只限制在附近的位置。
 
+Given an Exemplar-SVM trained on a CG model rendered at a speciﬁc 3D location relative to the virtual camera, we perform 3D convolution only at the nearby region. Such restriction on search space improves the speed as well as detection accuracy, because objects far away from the training location are of different point density, and presents different self-occlusion condition due to their difference in view angles. The SVM and 3D feature may not be robust enough to model this difference. Therefore, we take a more conservative search with restriction to only nearby locations.
+
 **跳跃窗口：**在三维中，有很多空的空间可以被安全地跳过。为了识别空箱并在卷积过程中跳过它们，为每张测试图像计算了一个三维积分图像，其中每个单元存储了该单元左上角的所有单元的点数之和。
 
 在卷积过程中，给定一个模型的窗口大小和它当前的单元位置，这个窗口内的总点数可以在恒定时间内从三维积分图像中快速计算出来。如果这个窗口内的总点数小于50，我们的检测器就会跳过这个窗口而不进行点乘。

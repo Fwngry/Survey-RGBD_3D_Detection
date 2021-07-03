@@ -18,6 +18,8 @@
 
 ![image-20210626183744463](https://oj84-1259326782.cos.ap-chengdu.myqcloud.com/uPic/2021/06_26_image-20210626183744463.png)
 
+![image-20210701112533739](https://oj84-1259326782.cos.ap-chengdu.myqcloud.com/uPic/2021/07_01_image-20210701112533739.png)
+
 pipeline：
 
 1. 生成模版
@@ -99,11 +101,33 @@ pipeline：
 
 ## 四、三维场景分析网络
 
+给定一个深度图像作为输入，我们首先使用截断符号距离函数（TSDF）[34, 28]将其转换为三维体积表示。我们使用128×128×64的TSDF网格来包括整个场景，体素单位大小为0.05米，截断值为0.15米。这个TSDF表示被送入三维神经网络，使模型在三维空间自然运行并直接产生三维输出。
+
 场景模版分类网络 - Scene Template Classification Network
+
+我们首先训练一个神经网络来估计输入场景的场景模板类别（图3，场景路径）。输入场景的TSDF表示首先被送入3层3D卷积+3D池化+ReLU，并转换为空间特征图。在通过两个全连接层后，三维空间特征被转换为一个全局特征向量，编码整个场景的信息。全局特征被用于经典的softmax层的场景模板分类。在测试过程中，如果置信度足够高（>0.95），我们会选择对输入场景得分最高的场景模板。否则，我们就不运行我们的方法，因为没有一个场景模板符合输入场景的要求。这样的场景会被传递给基于局部外观的物体检测器进行物体检测。在实践中，这四个场景模板可以与SUN-RGBD数据集中从各种室内环境中捕获的一半以上的图像相匹配。
+
+We ﬁrst train a neural network to estimate the scene template category for the input scene (Fig. 3, Scene pathway). The TSDF representation of the input scene is ﬁrstly fed into 3 layers of 3D convolution + 3D pooling + ReLU, and converted to a spatial feature map. After passing through two fully connected layers, the 3D spatial feature is converted to a global feature vector that encodes the information from the whole scene. The global feature is used for scene template classiﬁcation with a classic softmax layer. During testing, we choose the scene template with the highest score for the input scene if the conﬁdence is high enough (> 0.95). Otherwise, we do not run our method because none of the scene templates ﬁts the input scene. Such scenes are passed to a local appearance based object detector for object detection. In practice, the four scene templates can match with more than half of the images in the SUN-RGBD dataset captured from various of indoor environments.
 
 转换网络 - Transformation network
 
+鉴于场景模板的类别，我们的方法估计了一个由三维旋转和平移组成的全局变换，将输入场景的点云与目标预设的场景模板对齐（图4）。这实质上是一个将输入场景中的主要物体与场景模板中的物体对齐的变换。这使得这一阶段的结果对输入的旋转不产生影响，并且物体的墙和边界框被全局地对齐到三个主要方向。我们架构的下一部分，即三维上下文网络，依靠这种对齐方式来获得物体的方向和基于场景模板的三维物体锚点位置的集合特征。
+
+我们首先估计旋转。我们假设重力方向是给定的，例如来自加速度计。在我们的案例中，这个重力方向是由我们实验中使用的SUN RGB-D数据集提供的。因此，我们只需要估计偏航，将输入点云在水平面上旋转到图1所示的场景模板视点。我们将360度的旋转范围划分为36个仓，并将这个问题归纳为一个分类任务（图4）。我们使用与第4.1节中介绍的场景模板分类网络相同的架构来训练3D ConvNet，除了为softmax生成一个36通道的输出。在训练过程中，我们将每个训练输入场景对准点云的中心，并为旋转（+/-10度）和翻译（点云范围的1/6）添加噪音。
+
+对于平移，我们应用相同的网络结构，在应用预测的旋转后识别平移。我们的目标是预测输入点云的主要物体的中心和其相应的场景模板之间的三维偏移。为了实现这一目标，我们将三维翻译空间离散成一个0.5米3分辨率的网格，其尺寸为[-2.5, 2.5]×[-2.5, 2.5]×[-1.5, 1]，并将这一任务再次表述为一个726路分类问题（图4）。我们尝试用各种损失函数进行直接回归，但效果不如分类法好。我们还尝试了一种基于ICP的方法，但它不能产生良好的效果。
+
 三维内容网络 - 3D Context network
+
+现在我们描述一下使用场景模板进行室内场景解析的上下文神经网络。对于上一节中定义的每个场景模板，都要训练一个单独的预测网络。如图3所示，该网络有两条路径。
+
+全局场景路径，给定一个与模板对齐的坐标系中的三维体积输入，产生一个保留了输入数据中空间结构的空间特征和整个场景的全局特征。
+
+对于物体路径，我们把来自场景路径的空间特征图作为输入，并根据特定物体的三维场景模板汇集本地的三维感兴趣区域（ROI）。
+
+三维兴趣区域池是一个6×6×6分辨率的最大池，灵感来自于[9]的二维兴趣区域池。三维汇集的特征然后通过两层三维卷积+三维汇集+ReLU，然后与来自场景路径的全局特征向量相连接。再经过两个全连接层，网络预测物体的存在（二元分类任务）以及与第3.1节中学习的锚点位置相关的三维物体边界框（三维位置和尺寸）的偏移（使用L1smooth loss[34]的回归任务）。在物体特征向量中包括全局场景特征向量，提供整体的背景信息，以帮助识别物体是否存在及其位置。
+
+We now describe the context neural network for indoor scene parsing using scene templates. For each scene template deﬁned in the previous section, a separate prediction network is trained. As shown in Fig. 3, the network has two pathways. The global scene pathway, given a 3D volumetric input in a coordinate system that is aligned with the template, produces both a spatial feature that preserves the spatial structure in the input data and a global feature for the whole scene. For the object pathway, we take the spatial feature map from the scene pathway as input, and pool the local 3D Region Of Interest (ROI) based on the 3D scene template for the speciﬁc object. The 3D ROI pooling is a max pooling at 6×6×6 resolution, inspired by the 2D ROI pooling from [9]. The 3D pooled features are then passed through 2 layers of 3D convolution + 3D pooling + ReLU, and then concatenated with the global feature vector from the scene pathway. After two more fully connected layers, the network predicts the existence of the object (a binary classiﬁcation task) as well as the offset of the 3D object bounding box (3D location and size) related to the anchor locations learned in Sec. 3.1 (a regression task using L1smooth loss [34]). Including the global scene feature vector in the object feature vector provides holistic context information to help identify if the object exists and its location.
 
 训练
 

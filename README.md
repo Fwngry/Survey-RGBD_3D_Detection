@@ -8,7 +8,7 @@
 
 3D Object Detection on ScanNet：https://paperswithcode.com/sota/3d-object-detection-on-scannetv2
 
-https://paperswithcode.com/datasets?q=&v=lst&o=match&mod=rgb-d
+所有RGBD的数据集：https://paperswithcode.com/datasets?q=&v=lst&o=match&mod=rgb-d
 
 注：
 

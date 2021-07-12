@@ -10,10 +10,7 @@
 
 https://paperswithcode.com/datasets?q=&v=lst&o=match&mod=rgb-d
 
-Geo only - 只使用几何输入（点云）
+注：
 
-第一，NYUv2数据集[40]，由“Amodal detection of 3d objects: Inferring 3d bounding boxes from 2d ones in rgb-depth images”提供改进的注释；
-
-2D Driven 3D – Regress
-
-In order to provide better 3D labelings for amodal 3D object detection research, we provide improved ground truth 3D bounding boxes annotations
+1. Geo only - 只使用几何输入（点云）
+2. NYUv2数据集[40]，由“Amodal detection of 3d objects: Inferring 3d bounding boxes from 2d ones in rgb-depth images”提供改进的注释；
